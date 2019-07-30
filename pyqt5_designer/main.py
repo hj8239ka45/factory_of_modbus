@@ -3,7 +3,6 @@
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from mainForm import MainUi   # 讀入我們設計的Main Window
-from secondForm import SecondUi   # 讀入我們設計的Main Window
 import sys
     
 if __name__ == "__main__":
