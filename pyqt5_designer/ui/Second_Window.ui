@@ -40,7 +40,7 @@
      <string>PushButton</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="line_hartbit">
+   <widget class="QLineEdit" name="line_station">
     <property name="geometry">
      <rect>
       <x>350</x>
@@ -50,7 +50,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label_hartbit">
+   <widget class="QLabel" name="label_station">
     <property name="geometry">
      <rect>
       <x>240</x>
@@ -60,14 +60,14 @@
      </rect>
     </property>
     <property name="text">
-     <string>Hart bit</string>
+     <string>station</string>
     </property>
    </widget>
    <widget class="QLCDNumber" name="lcd_volt">
     <property name="geometry">
      <rect>
-      <x>750</x>
-      <y>20</y>
+      <x>780</x>
+      <y>10</y>
       <width>131</width>
       <height>51</height>
      </rect>

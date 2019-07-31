@@ -30,6 +30,11 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         c1.host(ip)
         c1.port(port)
         c1.unit_id(1) #set UID to 1
+        c1.auto_open(True)
+        c1.auto_close(True)
+        # uncomment this line to see debug message
+        c1.debug(True)
+
         print(c1)
         if not c1.is_open():
             if not c1.open():
@@ -53,18 +58,25 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
-        self.lcd_volt.setDigitCount(4)
+        self.lcd_volt.setDigitCount(5)
         self.lcd_volt.setMode(QLCDNumber.Dec)
         self.lcd_volt.setStyleSheet("border: 2px solid black; color: red; background: silver;")
         self.button_send.clicked.connect(self.display)
     def display(self):
         self.read_volt()
         self.display_volt()
+        self.get_station()
+        self.write_station()
+    def get_station(self):
+        self.station = self.line_station.text()
+        print('regs:\n',self.station,type(int(self.station)))
+    def write_station(self):
+        c1.write_single_register(0xD6,int(self.station))
     def read_volt(self):
         self.regs = c1.read_holding_registers(0x6E, 1)
         print('regs:\n',self.regs)
     def display_volt(self):
         volt = str(self.regs)
         print("volt",volt)
-        self.lcd.display(9)
+        self.lcd_volt.display(volt)
 
