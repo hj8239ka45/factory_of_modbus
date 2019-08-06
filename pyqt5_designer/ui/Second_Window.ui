@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>875</width>
-    <height>417</height>
+    <height>416</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,19 +25,6 @@
     </property>
     <property name="text">
      <string>Modbus TCP 控制</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="button_thread">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>100</y>
-      <width>112</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>建立執行續</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="line_station">
@@ -83,20 +70,20 @@
      </rect>
     </property>
     <property name="text">
-     <string>自動模式</string>
+     <string>手動模式</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="button_threadend">
+   <widget class="QPushButton" name="button_push">
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>190</y>
+      <y>100</y>
       <width>112</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>結束執行續</string>
+     <string>送出</string>
     </property>
    </widget>
   </widget>

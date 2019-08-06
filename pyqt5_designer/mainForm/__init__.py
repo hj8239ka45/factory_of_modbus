@@ -31,8 +31,6 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
     def turn_interface(self):
         ip = self.line_ip.text()
         port = int(self.line_port.text())
-        print("ip",type(ip))
-        print("port",type(port))
         c1.host(ip)
         c1.port(port)
         c1.unit_id(1) #set UID to 1
@@ -50,8 +48,10 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         if ip=="" or port=="":
             print("keyin the ip or port")
         elif c1.open():
-            regs = c1.read_holding_registers(0x6E, 1)
-            print('regs:\n',regs)
+# =============================================================================
+#             regs = c1.read_holding_registers(0x6E, 1)
+#             print('regs:\n',regs)
+# =============================================================================
             self.b_window.show()
 
 # 設計好的ui檔案路徑
@@ -69,42 +69,44 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         self.lcd_volt.setStyleSheet("border: 2px solid black; color: red; background: silver;")
         self.initUI()
     def initUI(self):
-        self.button_thread.clicked.connect(self.display)
         self.button_auto.clicked.connect(self.auto_mode)
+        self.button_push.clicked.connect(self.display_volt)
     def auto_mode(self):
         if self.button_auto.text()=='自動模式':
             self.auto_mode = False
             self.button_auto.setText('手動模式')
+            self.stop_thread()
         else:
             self.auto_mode = True
             self.button_auto.setText('自動模式')
-    def display(self):
-        self.thread_set()
+            self.thread_set()
+    def display_volt(self):
         self.read_volt()
-        self.display_volt()
-# =============================================================================
-#         self.get_station()
-#         self.write_station()
-# =============================================================================
-    def thread_set(self):
-        self.backend = BackendThread()# 建立執行緒
-        print(self.backend)
-        self.backend.update_station.connect(self.handle_station)# 連線訊號
-        self.backend.start()# 開始執行緒
-    def stop_thread(self):
-        backend.flag = 1
+        self.write_volt()
+        self.get_station()
+        self.write_station()
+        
     def get_station(self):
         self.station = self.line_station.text()
-        print('regs:\n',self.station,type(int(self.station)))
+        #print('regs:\n',self.station,type(int(self.station)))
     def write_station(self):
         c1.write_single_register(0xD6,int(self.station))
     def read_volt(self):
         self.regs = c1.read_holding_registers(0x6E, 1)
-        print('regs:\n',self.regs)
-    def display_volt(self):
+        #print('regs:\n',self.regs)
+    def write_volt(self):
         volt = str(self.regs)
         print("volt",volt)
         self.lcd_volt.display(volt)
+        
+    def thread_set(self):
+        self.backend = BackendThread()# 建立執行緒
+        #print(self.backend)
+        self.backend.update_station.connect(self.handle_station)# 連線訊號
+        self.backend.start()# 開始執行緒
+    def stop_thread(self):
+        self.backend.stop()
+        #print('stop')
     def handle_station(self, data):# 將當前時間輸出到文字框
         self.station = data
         self.line_station.setText(data)

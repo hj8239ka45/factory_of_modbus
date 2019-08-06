@@ -14,13 +14,17 @@ class BackendThread(QThread):
     update_station = pyqtSignal(str)
     # 處理業務邏輯
     def run(self):
-        flag = 0
+        self.flag = 0
         while True:
             station = get(firebase_url).json()['AgvStation']
             self.update_station.emit( str(station) )
             time.sleep(0.1)
-            if flag == 1:
-                print('flag',flag)
+            if self.flag == 1:
+                self.flag = 0
+                print('stop',self.flag)
                 break
+    def stop(self): 
+        self.flag = 1
+        #print('stop')
 
             
