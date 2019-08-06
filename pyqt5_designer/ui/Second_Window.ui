@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>949</width>
+    <width>875</width>
     <height>417</height>
    </rect>
   </property>
@@ -27,17 +27,17 @@
      <string>Modbus TCP 控制</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="button_send">
+   <widget class="QPushButton" name="button_thread">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>290</y>
+      <x>40</x>
+      <y>100</y>
       <width>112</width>
-      <height>34</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>PushButton</string>
+     <string>建立執行續</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="line_station">
@@ -66,11 +66,37 @@
    <widget class="QLCDNumber" name="lcd_volt">
     <property name="geometry">
      <rect>
-      <x>780</x>
-      <y>10</y>
+      <x>720</x>
+      <y>20</y>
       <width>131</width>
       <height>51</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_auto">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>20</y>
+      <width>112</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>自動模式</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="button_threadend">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>190</y>
+      <width>112</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>結束執行續</string>
     </property>
    </widget>
   </widget>
@@ -79,7 +105,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>949</width>
+     <width>875</width>
      <height>29</height>
     </rect>
    </property>

@@ -1,9 +1,15 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLCDNumber, QFileDialog
-from PyQt5 import QtCore, QtGui
-import os,sys,shutil
-from pyModbusTCP.client import ModbusClient
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jul 31 21:24:40 2019
 
+@author: hj823
+"""
+
+from PyQt5 import QtWidgets, uic
+from PyQt5.QtWidgets import QLCDNumber
+import os
+from pyModbusTCP.client import ModbusClient
+from Backend import BackendThread
 path = os.getcwd()
 # 設計好的ui檔案路徑
 qtCreatorFile_main = path + os.sep + "ui" + os.sep + "Main_Window.ui"
@@ -52,7 +58,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
 qtCreatorFile_second = path + os.sep + "ui" + os.sep + "Second_Window.ui"
 # 讀入用Qt Designer設計的GUI layout
 Ui_SecondWindow, QtBaseClass_second = uic.loadUiType(qtCreatorFile_second)
-
+firebase_url="https://smartmanu-af015.firebaseio.com/.json"
 class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承 MainUi 繼承自兩個類別
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
@@ -61,12 +67,32 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         self.lcd_volt.setDigitCount(5)
         self.lcd_volt.setMode(QLCDNumber.Dec)
         self.lcd_volt.setStyleSheet("border: 2px solid black; color: red; background: silver;")
-        self.button_send.clicked.connect(self.display)
+        self.initUI()
+    def initUI(self):
+        self.button_thread.clicked.connect(self.display)
+        self.button_auto.clicked.connect(self.auto_mode)
+    def auto_mode(self):
+        if self.button_auto.text()=='自動模式':
+            self.auto_mode = False
+            self.button_auto.setText('手動模式')
+        else:
+            self.auto_mode = True
+            self.button_auto.setText('自動模式')
     def display(self):
+        self.thread_set()
         self.read_volt()
         self.display_volt()
-        self.get_station()
-        self.write_station()
+# =============================================================================
+#         self.get_station()
+#         self.write_station()
+# =============================================================================
+    def thread_set(self):
+        self.backend = BackendThread()# 建立執行緒
+        print(self.backend)
+        self.backend.update_station.connect(self.handle_station)# 連線訊號
+        self.backend.start()# 開始執行緒
+    def stop_thread(self):
+        backend.flag = 1
     def get_station(self):
         self.station = self.line_station.text()
         print('regs:\n',self.station,type(int(self.station)))
@@ -79,4 +105,8 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         volt = str(self.regs)
         print("volt",volt)
         self.lcd_volt.display(volt)
-
+    def handle_station(self, data):# 將當前時間輸出到文字框
+        self.station = data
+        self.line_station.setText(data)
+        print(data)
+        self.write_station()
