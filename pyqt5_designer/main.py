@@ -9,7 +9,7 @@ Created on Wed Jul 31 21:24:40 2019
 # http://elmer-storage.blogspot.com/2018/04/pyqt.html
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
-from mainForm import MainUi   # 讀入我們設計的Main Window
+from mainForm import MainUi   # 讀入設計的Main Window
 import sys
     
 if __name__ == "__main__":
@@ -17,8 +17,8 @@ if __name__ == "__main__":
         app = QtCore.QCoreApplication.instance()
         if app is None:
             app = QtWidgets.QApplication(sys.argv)
-            print('app',app)
         a_window = MainUi()
         a_window.show()
         sys.exit(app.exec_())
+        
     run_app()

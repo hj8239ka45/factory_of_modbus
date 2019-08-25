@@ -8,7 +8,7 @@ Created on Wed Jul 31 21:24:40 2019
 from PyQt5 import QtWidgets, uic
 import os
 from pyModbusTCP.client import ModbusClient
-from secondForm import SecondUi   # 讀入我們設計的Main Window
+from secondForm import SecondUi   # 讀入設計的Second Window
 
 path = os.getcwd()
 # 設計好的ui檔案路徑
@@ -40,7 +40,6 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         # uncomment this line to see debug message
         c1.debug(True)
 
-        print(c1)
         if not c1.is_open():
             if not c1.open():
                 print("unable to connect to "+ip+":"+str(port))

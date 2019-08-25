@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>875</width>
-    <height>416</height>
+    <width>991</width>
+    <height>634</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -112,16 +112,78 @@
      <string>AGV停止</string>
     </property>
    </widget>
+   <widget class="QTableWidget" name="table_firebase">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>320</y>
+      <width>931</width>
+      <height>161</height>
+     </rect>
+    </property>
+    <property name="rowCount">
+     <number>2</number>
+    </property>
+    <property name="columnCount">
+     <number>6</number>
+    </property>
+    <row>
+     <property name="text">
+      <string>Firebase 讀取</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>Firebase 傳送</string>
+     </property>
+    </row>
+    <column>
+     <property name="text">
+      <string>Chuck_Robot</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Chuck_Workpiece</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Arm</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Running</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>AGV 到工作站</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Error</string>
+     </property>
+    </column>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>875</width>
+     <width>991</width>
      <height>29</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>功能</string>
+    </property>
+   </widget>
+   <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
