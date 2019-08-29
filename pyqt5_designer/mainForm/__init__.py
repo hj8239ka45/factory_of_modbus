@@ -27,7 +27,8 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         self.b_window = SecondUi(c1)
         self.button_enter.clicked.connect(self.turn_interface)
         print('b_window')
-        
+    def closeEvent(self, event):#關閉執行
+        print("closed!!")
     def turn_interface(self):
         ip = self.line_ip.text()
         port = int(self.line_port.text())

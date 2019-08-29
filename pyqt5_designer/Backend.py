@@ -7,7 +7,6 @@ Created on Wed Jul 31 21:24:40 2019
 from PyQt5.QtCore import QThread ,  pyqtSignal
 from requests import get
 from pyModbusTCP.client import ModbusClient
-import time
 
 firebase_url="https://smartmanu-af015.firebaseio.com/.json"
 class BackendThreadFirebase(QThread):
@@ -25,23 +24,8 @@ class BackendThreadFirebase(QThread):
                 break
     def stop(self): 
         self.flag = 1
-        #print('stop')
-
-class BackendThreadHart(QThread):
-    # 處理業務邏輯
-    def run(self):
-        self.flag_hart = 0
-        while True:
-            self.c1=ModbusClient()
-            self.c1.write_single_register(0xC8,1)
-            time.sleep(1)
-            self.c1.write_single_register(0xC8,0)
-            print("hartbit!")
-            if self.flag_hart == 1:
-                print('stop!!!hartbit!!',self.flag_hart)
-                self.flag_hart = 0
-                break
-    def stop(self): 
-        self.flag_hart = 1
-        #print('stop')
-            
+        
+        
+        
+        
+        
