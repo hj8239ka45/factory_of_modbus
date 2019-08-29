@@ -20,5 +20,5 @@ if __name__ == "__main__":
         a_window = MainUi()
         a_window.show()
         sys.exit(app.exec_())
-        
+                
     run_app()

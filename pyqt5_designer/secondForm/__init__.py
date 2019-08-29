@@ -266,6 +266,7 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
             time.sleep(1)
             agv_tag = self.read_tag()    
             print('agv_tag',agv_tag)
+            
             if agv_tag==[1]:
                 print('arrive WEDM!')
                 self.write_AGVstop()

@@ -35,7 +35,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         c1.host(ip)
         c1.port(port)
         c1.unit_id(1) #set UID to 1
-        c1.timeout(2)
+        c1.timeout(1.5)
         c1.auto_open(True)
         c1.auto_close(True)
         # uncomment this line to see debug message
@@ -44,10 +44,12 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         if not c1.is_open():
             if not c1.open():
                 print("unable to connect to "+ip+":"+str(port))
+                self.label_error.setText("unable to connect to "+ip+":"+str(port))
             else:
                 print("connected !!")
         if ip=="" or port=="":
             print("keyin the ip or port")
         elif c1.open():
+            self.label_error.setText("")
             self.b_window.show()
             

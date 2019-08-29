@@ -6,7 +6,7 @@ Created on Wed Jul 31 21:24:40 2019
 """
 from PyQt5.QtCore import QThread ,  pyqtSignal
 from requests import get
-from pyModbusTCP.client import ModbusClient
+#from pyModbusTCP.client import ModbusClient
 
 firebase_url="https://smartmanu-af015.firebaseio.com/.json"
 class BackendThreadFirebase(QThread):
