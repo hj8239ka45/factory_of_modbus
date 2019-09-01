@@ -11,7 +11,7 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from mainForm import MainUi   # 讀入設計的Main Window
 import sys
-    
+
 if __name__ == "__main__":
     def run_app():
         app = QtCore.QCoreApplication.instance()

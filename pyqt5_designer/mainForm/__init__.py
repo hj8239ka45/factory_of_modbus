@@ -52,4 +52,3 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         elif c1.open():
             self.label_error.setText("")
             self.b_window.show()
-            
