@@ -1,2 +1,0 @@
-C:\Users\hj823\Anaconda3
-C:\Users\hj823\Anaconda3\envs\python3.6
