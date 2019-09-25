@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>849</width>
-    <height>411</height>
+    <width>818</width>
+    <height>432</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>120</y>
+      <y>100</y>
       <width>461</width>
       <height>201</height>
      </rect>
@@ -84,9 +84,9 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>330</y>
+      <y>320</y>
       <width>459</width>
-      <height>16</height>
+      <height>71</height>
      </rect>
     </property>
     <property name="text">
@@ -97,17 +97,58 @@
     </property>
    </widget>
   </widget>
-  <widget class="QMenuBar" name="menubar">
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QMenuBar" name="mainMenu">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>849</width>
+     <width>818</width>
      <height>29</height>
     </rect>
    </property>
+   <widget class="QMenu" name="fileMenu">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="exitButton"/>
+    <addaction name="enterButton"/>
+   </widget>
+   <widget class="QMenu" name="editMenu">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <widget class="QMenu" name="comMenu">
+     <property name="title">
+      <string>COM</string>
+     </property>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="comMenu"/>
+   </widget>
+   <addaction name="fileMenu"/>
+   <addaction name="editMenu"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionCOM">
+   <property name="text">
+    <string>COM</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="exitButton">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="enterButton">
+   <property name="text">
+    <string>Enter</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
