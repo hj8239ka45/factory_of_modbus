@@ -8,7 +8,7 @@ Created on Mon Sep  2 14:39:40 2019
 
 import serial
 def serial_ports():
-    p = ['COM%s' % (i + 1) for i in range(256)]
+    p = ['COM%s' % (i + 1) for i in range(10)]
     rlt = []
     for port in p:#測試0~255的COM是否使用，並回傳
         try:

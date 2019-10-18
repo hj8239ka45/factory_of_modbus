@@ -98,55 +98,9 @@
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QMenuBar" name="mainMenu">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>818</width>
-     <height>29</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="fileMenu">
-    <property name="title">
-     <string>File</string>
-    </property>
-    <addaction name="exitButton"/>
-    <addaction name="enterButton"/>
-   </widget>
-   <widget class="QMenu" name="editMenu">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <widget class="QMenu" name="comMenu">
-     <property name="title">
-      <string>COM</string>
-     </property>
-     <addaction name="separator"/>
-    </widget>
-    <addaction name="comMenu"/>
-   </widget>
-   <addaction name="fileMenu"/>
-   <addaction name="editMenu"/>
-  </widget>
   <action name="actionCOM">
    <property name="text">
     <string>COM</string>
-   </property>
-  </action>
-  <action name="actionExit">
-   <property name="text">
-    <string>Exit</string>
-   </property>
-  </action>
-  <action name="exitButton">
-   <property name="text">
-    <string>Exit</string>
-   </property>
-  </action>
-  <action name="enterButton">
-   <property name="text">
-    <string>Enter</string>
    </property>
   </action>
  </widget>

@@ -10,14 +10,16 @@ Created on Wed Jul 31 21:24:40 2019
 
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QLCDNumber , QTableWidgetItem
-import os
+from pyModbusTCP.client import ModbusClient
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtGui import QIcon
-from pyModbusTCP.client import ModbusClient
-from Backend import BackendThread_HartBit,BackendThread_Auto
-import RoboticArmLib as RbArm
 from firebase import firebase as fbs
+import os
 import time
+
+import ReadWriteLib as RWM
+import Backend as BK
+import RoboticArmLib as RbArm
 
 '''
     由 main.py 引入此 __init__.py檔案: 使用的 path 路徑也在 main.py 底下
@@ -31,7 +33,7 @@ qtCreatorFile_second = path + os.sep + "ui" + os.sep + "Second_Window.ui"
 Ui_SecondWindow, QtBaseClass_second = uic.loadUiType(qtCreatorFile_second)
 class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承 MainUi 繼承自兩個類別
     def __init__(self,c=ModbusClient(),com = ""):
-        self.c1 = c
+        self.rwm = RWM.ReadWriteMethod(c)
         self.COM = com
         QtWidgets.QMainWindow.__init__(self)
         Ui_SecondWindow.__init__(self)
@@ -39,13 +41,20 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         self.setWindowIcon(QtGui.QIcon(path + os.sep + 'MeVb.png'))
         self.lcd_volt.setDigitCount(5)
         
-        self.exitButton.setShortcut('Ctrl+Q')
-        self.exitButton.setStatusTip('Exit application')
-        self.exitButton.triggered.connect(self.close)
+        mainMenu = self.menuBar()
+        fileMenu = mainMenu.addMenu('File')
+        exitButton = QAction('Exit', self)
+        exitButton.setShortcut('Ctrl+Q')
+        exitButton.setStatusTip('Exit application')
+        exitButton.triggered.connect(self.close)
+        fileMenu.addAction(exitButton)
         
-        self.autoButton.setShortcut('Ctrl+A')
-        self.autoButton.setStatusTip('Auto application')
-        self.autoButton.triggered.connect(self.auto_mode)
+        fileMenu = mainMenu.addMenu('Edit')
+        autoButton = QAction('Auto_Mode', self)
+        autoButton.setShortcut('Ctrl+A')
+        autoButton.setStatusTip('Auto application')
+        autoButton.triggered.connect(self.auto_mode)
+        fileMenu.addAction(autoButton)        
         
         self.lcd_volt.setMode(QLCDNumber.Dec)
         self.lcd_volt.setStyleSheet("border: 2px solid black; color: red; background: silver;")
@@ -54,6 +63,7 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         self.RtArm.close()
         self.thread_stop()
         print("closed!!")
+        
     def initUI(self):#初始按鈕連接的函式建立連線，以及各個功能初始物件建立
         self.button_auto.clicked.connect(self.auto_mode)
         self.button_push.clicked.connect(self.display)
@@ -62,7 +72,6 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         self.tableUI()
         self.Firebase_set()
         self.robot_set()
-        
 # =============================================================================
 #     UTable
 # =============================================================================
@@ -97,32 +106,19 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
 #     MODE  模式
 # =============================================================================
     def auto_mode(self):#used for 9/1
-        volt = self.read_volt()
-        self.write_volt(volt)
+        self.rwm.write_hartbit()
+        volt = self.rwm.read_volt()
+        self.set_volt(volt)
         if self.button_auto.text()=='自動模式':
             self.button_auto.setText('手動模式')
-            self.write_AGVstop()
-            self.thread_stop()           
+            self.thread_stop()
+            self.rwm.write_AGVstop()
         else:
             self.button_auto.setText('自動模式')
             self.thread_set()
-            self.write_AGVrun()   
 # =============================================================================            
-#            self.toWEDM()
-#            #手臂&firebase
-#            self.ArmWEDM()
-# =============================================================================
-#            self.toHSM()
-#            ##手臂&firebase
-#            self.ArmHSM()
-# =============================================================================
-#            self.toLaser()
-#            ##手臂&firebase
-#            self.ArmLaser()
-# =============================================================================
-#            self.toCMM()
-#            ##手臂&firebase
-#            self.ArmCMM()
+
+
 # =============================================================================
 
 
@@ -131,32 +127,29 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
     def charging(self):
         if self.button_charge.text()=='停止充電':
             self.button_charge.setText('開始充電')
-            self.write_charge(0b01)
+            self.rwm.write_charge(0b01)
         else:
             self.button_charge.setText('停止充電')
-            self.write_charge(0b10)
+            self.rwm.write_charge(0b10)
     def AGV_run(self):
         if self.button_run.text()=='AGV停止':
             self.button_run.setText('AGV啟動')
-            self.write_AGVrun()
+            self.rwm.write_AGVrun()
         else:
             self.button_run.setText('AGV停止')
-            self.write_AGVstop()
-            print('AGV RUN STATUS : *--',self.read_AGVrun())
+            self.rwm.write_AGVstop()
+            print('AGV RUN STATUS : *--',self.rwm.read_AGVrun())
 # =============================================================================
 #     DISPLAY  顯示
 # =============================================================================
     def display(self):#讀取line_station寫得值並寫入AGV的PLC
-        station = self.read_station()
+        station = self.rwm.get_station_text()
         if station.isdigit():
-            self.write_station(station)
+            self.rwm.write_station(station)
         else:
-            self.write_Act(station)
-# =============================================================================
-#     WRITE&READ  寫入讀取  
-# =============================================================================
-    def write_Act(self,station):
-        station = self.read_station()
+            self.agv_act(station)
+    def agv_act(self,station):
+        station = self.get_station_text()
         if station == "WEDM":
             self.toWEDM()
             self.ArmWEDM()
@@ -171,47 +164,14 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
             self.ArmCMM()
         else:
             print("error")
-        
-    def read_station(self):
+            
+    def get_station_text(self):
         station = self.line_station.text()
         return station
-    def write_station(self,station):
-        self.station = station
-        self.c1.write_single_register(0xD6,int(self.station))
-    def read_tag(self):
-        tag = self.c1.read_holding_registers(0x74, 1)
-        return tag
-    def read_volt(self):
-        volt = self.c1.read_holding_registers(0x6E, 1)
-        return volt
-        #print('regs:\n',self.regs)
-    def write_volt(self,volt):
+    def set_volt(self,volt):
         volt = str(volt)
         print("volt",volt)
         self.lcd_volt.display(volt)
-    def write_charge(self,data):
-        self.c1.write_single_register(0xD1,data)
-    def write_hartbit(self):
-        time.sleep(1)
-        self.c1.write_single_register(0xC8,1)
-        time.sleep(1)
-        self.c1.write_single_register(0xC8,0)
-        time.sleep(1)
-    def write_AGVrun(self):
-        self.write_hartbit()
-        self.c1.write_single_register(0xD7,0b01)
-        self.write_hartbit()
-        print("Run!!!!!!!!!!!!")
-
-    def write_AGVstop(self):
-        self.write_hartbit()
-        self.c1.write_single_register(0xC8,0b10)
-        self.write_hartbit()
-        print("Stop!!!!!!!!!!!!")
-
-    def read_AGVrun(self):
-        reg = self.c1.read_holding_registers(0xC8, 21)
-        return reg
 # =============================================================================
 #     BACKEND THREAD Firebase       Firebase背景執行緒
 # =============================================================================
@@ -221,45 +181,66 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         handle_firebase(): 背景執行緒物件訊號
     '''
     def thread_set(self):
-        station = self.c1.read_holding_registers(0x72,1)
-        #self.backend_hartbit = BackendThread_HartBit(self.c1)
-        #self.backend_hartbit.start()# 開始執行緒
-        self.backend_auto = BackendThread_Auto(self.c1,station)
-        self.backend_auto.start()# 開始執行緒        
-        self.backend_auto.update_arrive.connect(self.handle_arrive)# 連線訊號
-    def handle_arrive(self,data):
-        print('data',data)
-        if data == str([1]):
-            print('WEDM')
-            #self.ArmWEDM()
-        elif data == str([8]):
-            print('HSM')
-            #self.ArmHSM()
-        elif data == str([13]):
-            print('Laser')
-            #self.ArmLaser()
-        elif data == str([12]):
-            print('CMM')
-            #self.ArmCMM()
+        self.backend_firebase = BK.BackendThreadFirebase()# 建立執行緒
+        self.backend_firebase.update_agv_signal.connect(self.handle_agv)# 連線訊號
+        self.backend_firebase.update_arm_signal.connect(self.handle_arm)# 連線訊號
+        self.backend_firebase.start()# 開始執行緒
     def thread_stop(self):
-        #self.backend_hartbit.stop()
-        self.backend_auto.stop()
-# =============================================================================
-#         self.backend_firebase = BackendThreadFirebase()# 建立執行緒
-#         self.backend_firebase.update_station.connect(self.handle_firebase)# 連線訊號
-#         self.backend_firebase.start()# 開始執行緒
-# =============================================================================
-# =============================================================================
-#     def handle_firebase(self, data):# 將當前訊息輸出到文字框
-#         self.station = data
-#         self.line_station.setText(data)
-# #        data_err = c1.read_holding_registers(0xDC,75)
-# #        print('err:',data_err)
-#         print(data)
-#         self.write_station()
-# =============================================================================
+        self.backend_firebase.stop()
+    def handle_agv(self, data):# agv
+        print('agv_signal',data,type(data))
+        if data=='0':#0b00
+            self.toWEDM()
+        elif data=='1':#0b01
+            self.toHSM()
+        elif data=='2':#0b10
+            self.toLaser()
+        elif data=='3':#0b11
+            self.toCMM()
 
+    def handle_arm(self, data):# arm
+        print('arm_signal',data)
+        #WEDM
+        if data=='0':#0b0000
+            self.WEDM_Arm_Pinch_AM_I()
+        elif data=='1':#0b0001
+            self.WEDM_Arm_Move_MA()
+        elif data=='2':#0b0010
+            self.WEDM_Arm_Move_AM_I()
+        elif data=='3':#0b0011
+            self.WEDM_Arm_Pinch_MA()
         
+        #HSM    
+        elif data=='4':#0b0100
+            self.HSM_Arm_Pinch_AM_I()
+        elif data=='5':#0b0101
+            self.HSM_Arm_Move_MA()
+        elif data=='6':#0b0110
+            self.HSM_Arm_Move_AM_I
+        elif data=='7':#0b0111
+            self.HSM_Arm_Pinch_MA
+            
+        #Laser
+        elif data=='8':#0b1000
+            self.Laser_Arm_Pinch_AM_I()
+        elif data=='9':#0b1001
+            self.Laser_Arm_Move_MA()
+        elif data=='10':#0b1010
+            self.Laser_Arm_Move_AM_I()
+        elif data=='11':#0b1011
+            self.Laser_Arm_Pinch_MA()
+        
+        #CMM
+        elif data=='12':#0b1100
+            self.CMM_Arm_Pinch_AM_I()
+        elif data=='13':#0b1101
+            self.CMM_Arm_Move_MA()
+        elif data=='14':#0b1110
+            self.CMM_Arm_Move_AM_I()
+        elif data=='15':#0b1111
+            self.CMM_Arm_Pinch_MA()
+
+
         
 # =============================================================================
 #     Go to Station
@@ -268,271 +249,251 @@ class SecondUi(QtWidgets.QMainWindow, Ui_SecondWindow):  # Python的多重繼承
         到各站機台
         判別到站後跳出迴圈
     '''
+    #agv_signal 0b00
     def toWEDM(self):
-        self.write_station(1)
-        self.write_AGVrun()
-        agv_tag = self.read_tag()
-        print(agv_tag)
+        array = {'WEDM':0,'HSM':0,'Laser':0,'CMM':0}
+        self.fdb.patch(self.url+"/AGV/",array)#離開站點
+        self.rwm.write_station(1)
+        self.rwm.write_AGVrun()
+        agv_tag = self.rwm.read_tag()
+        #print(agv_tag)
         while agv_tag!=[1]:
-            time.sleep(1)
-            agv_tag = self.read_tag()
+            #time.sleep(1)
+            agv_tag = self.rwm.read_tag()    
             print('agv_tag',agv_tag)
             
             if agv_tag==[1]:
                 print('arrive WEDM!')
-                self.write_AGVstop()
-    def ArmWEDM(self):
-#            #沒門
-        self.fdb.put(self.url+"/AGV/",'WEDM',1) #agv到站
-        self.fdb.put(self.url+"/WEDM/",'Arm',0) #手臂下去，準備夾工件
+                self.rwm.write_AGVstop()
+                self.fdb.put(self.url+"/AGV/",'WEDM',1) #agv到站
+                self.fdb.put(self.url+"/ARM/",'Enable',1) #手臂可動作
+    #arm_signal 0b0000
+    def WEDM_Arm_Pinch_AM_I(self): #WEDM底下遇到000010111手臂(夾放,AGV->機台,影處)
         self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/WEDM/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/WEDM/",'Chuck_R',0)#手臂夾
         self.RtArm.grip()
-        self.fdb.put(self.url+"/WEDM/",'Arm',0)#手臂動(送進機臺)
         self.RtArm.move_to_machine1()
-        self.fdb.put(self.url+"/WEDM/",'Arm',1)#手臂停止(到夾置具上方)
-        time.sleep(2)
-        WEDM = self.fdb.get('/WEDM',None)
-        while WEDM['Chuck_W']!=0:#工具機夾爪夾持
-            time.sleep(0.5)
-            WEDM = self.fdb.get('/WEDM',None)
-            print(WEDM['Chuck_W'])
-            print("wait for Chuck_workpiece")
-        self.fdb.put(self.url+"/WEDM/",'Chuck_R',1)#手臂放
         self.RtArm.ungrip()
-        self.fdb.put(self.url+"/WEDM/",'Arm',0)#手臂移開
+        
+    #arm_signal 0b0001
+    def WEDM_Arm_Move_MA(self): #WEDM底下遇到00110011手臂(移動,機台->AGV)
         self.RtArm.back_from_machine1()
-        self.fdb.put(self.url+"/WEDM/",'Arm',2)#手臂停(移回AGV)
-        time.sleep(2)
-        WEDM = self.fdb.get('/WEDM',None)
-        while WEDM['Running']!=1:#工具機夾爪夾持
-            time.sleep(0.5)
-            WEDM = self.fdb.get('/WEDM',None)
-            print("wait for Machine Stoped")
-        time.sleep(2)
-        self.fdb.put(self.url+"/WEDM/",'Arm',0)#手臂動(送進機臺)
+        
+    #arm_signal 0b0010
+    def WEDM_Arm_Move_AM_I(self): #WEDM底下遇到01110011手臂(移動,AGV->機台,影處)
         self.RtArm.move_to_machine1()
-        self.fdb.put(self.url+"/WEDM/",'Arm',1)#手臂停止(到夾置具上方)
-        self.fdb.put(self.url+"/WEDM/",'Chuck_R',0)#手臂夾爪夾持
+        
+    #arm_signal 0b0011
+    def WEDM_Arm_Pinch_MA(self): #WEDM底下遇到01000011手臂(夾放,機台->AGV)
         self.RtArm.grip()
-        time.sleep(2)
-        WEDM = self.fdb.get('/WEDM',None)
-        while WEDM['Chuck_W']!=1:#工具夾爪放
-            time.sleep(0.5)
-            WEDM = self.fdb.get('/WEDM',None)
-            print("wait for Chuck_workpiece")
-        self.fdb.put(self.url+"/WEDM/",'Arm',0)#手臂動(移回AGV)
         self.RtArm.back_from_machine1()
-        self.fdb.put(self.url+"/WEDM/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/WEDM/",'Arm',0)#手臂下去
         self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/WEDM/",'Arm',2)#手臂放下工件
         self.RtArm.ungrip()
-        self.fdb.put(self.url+"/WEDM/",'Arm',0)#手臂上去
-        self.fdb.put(self.url+"/WEDM/",'Arm',2)#手臂回到原位
-        self.RtArm.back_from_workpiece_table()
-        self.fdb.put(self.url+"/AGV/",'WEDM',0)#AGV 走
+        self.RtArm.back_from_workpiece_table()    
+
         
-        
+    #agv_signal 0b01
     def toHSM (self):
-        self.write_station(8)
-        self.write_AGVrun()
-        agv_tag = self.read_tag()
+        array = {'WEDM':0,'HSM':0,'Laser':0,'CMM':0}#離開站點
+        self.fdb.patch(self.url+"/AGV/",array)
+        self.rwm.write_station(8)
+        self.rwm.write_AGVrun()
+        agv_tag = self.rwm.read_tag()
         print(agv_tag)
         while agv_tag!=[8]:
             time.sleep(1)
-            agv_tag = self.read_tag()    
+            agv_tag = self.rwm.read_tag()    
             print('agv_tag',agv_tag)
             if agv_tag==[8]:
                 print('arrive HSM!')
-                self.write_AGVstop()
+                self.rwm.write_AGVstop()
+                self.fdb.put(self.url+"/AGV/",'HSM',1)#agv到站
+                self.fdb.put(self.url+"/ARM/",'Enable',1) #手臂可動作
                 
-                
-    def ArmHSM(self):
-        #            #有門
-        self.fdb.put(self.url+"/AGV/",'HSM',1)#agv到站
-        self.fdb.put(self.url+"/HSM/",'Arm',0)#手臂下去(準備夾工件)
+    #arm_signal 0b0100
+    def HSM_Arm_Pinch_AM_I(self): #HSM底下遇到000010111手臂(夾放,AGV->機台,影處)
         self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/HSM/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/HSM/",'Chuck_R',0)#手臂夾
         self.RtArm.grip()
-        self.fdb.put(self.url+"/HSM/",'Arm',0)#手臂動(送進機臺)
-        self.RtArm.move_to_machine3()
-        self.fdb.put(self.url+"/HSM/",'Arm',1)#手臂停止(到夾置具上方)
-        time.sleep(2)
-        HSM = self.fdb.get('/HSM',None)
-        while HSM['Chuck_W']!=0: #工具機夾爪夾持
-            time.sleep(0.5)
-            HSM = self.fdb.get('/HSM',None)
-            print("wait for CHUCK WORKPIECE")
-        self.fdb.put(self.url+"/HSM/",'Chuck_R',1)#手臂放(順序改一下)
+        self.RtArm.move_to_machine2()
         self.RtArm.ungrip()
-        self.fdb.put(self.url+"/HSM/",'Arm',0)#手臂移開
-        self.RtArm.back_from_machine3()
-        self.fdb.put(self.url+"/HSM/",'Arm',2)#手臂停(移回AGV)
-        time.sleep(2)
-        HSM = self.fdb.get('/HSM/',None)
-        while HSM['Door']!=1:#門關後Delay20秒
-            time.sleep(0.5)
-            HSM = self.fdb.get('/HSM',None)
-            print("wait for DOOR OPENED")
-        time.sleep(2)
-        self.fdb.put(self.url+"/HSM/",'Arm',0)#手臂動(送進機臺)
-        self.RtArm.move_to_machine3()
-        self.fdb.put(self.url+"/HSM/",'Arm',1)#手臂停止(到夾置具上方)
-        self.fdb.put(self.url+"/HSM/",'Chuck_R',0)#手臂夾
+        
+    #arm_signal 0b0101
+    def HSM_Arm_Move_MA(self): #HSM底下遇到00110011手臂(移動,機台->AGV)
+        self.RtArm.back_from_machine2()
+        
+    #arm_signal 0b0110
+    def HSM_Arm_Move_AM_I(self): #HSM底下遇到01110011手臂(移動,AGV->機台,影處)
+        self.RtArm.move_to_machine2()
+        
+    #arm_signal 0b0111
+    def HSM_Arm_Pinch_MA(self): #HSM底下遇到01000011手臂(夾放,機台->AGV)
         self.RtArm.grip()
-        time.sleep(2)
-        HSM = self.fdb.get('/HSM/',None)
-        while HSM['Chuck_W']!=1:#工具放
-            HSM = self.fdb.get('/HSM',None)
-            time.sleep(0.5)
-            print("wait for CHUCK WORKPIECE")
-        self.fdb.put(self.url+"/HSM/",'Arm',0)#手臂動(移回AGV)
-        self.RtArm.back_from_machine3()
-        self.fdb.put(self.url+"/HSM/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/HSM/",'Arm',0)#手臂下去
+        self.RtArm.back_from_machine2()
         self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/HSM/",'Arm',2)
-        self.fdb.put(self.url+"/HSM/",'Chuck_R',1)#手臂放下工件
         self.RtArm.ungrip()
-        self.fdb.put(self.url+"/HSM/",'Arm',0)#手臂上去
-        self.fdb.put(self.url+"/HSM/",'Arm',2)#手臂回到原位
-        self.RtArm.back_from_workpiece_table()
-        self.fdb.put(self.url+"/AGV/",'HSM',0)#AGV 走
-
+        self.RtArm.back_from_workpiece_table()            
+                   
             
+    #agv_signal 0b10
     def toLaser(self):
-        self.write_station(13)
-        self.write_AGVrun()
-        agv_tag = self.read_tag()
+        array = {'WEDM':0,'HSM':0,'Laser':0,'CMM':0}#離開站點
+        self.fdb.patch(self.url+"/AGV/",array)
+        self.rwm.write_station(13)
+        self.rwm.write_AGVrun()
+        agv_tag = self.rwm.read_tag()
         print(agv_tag)
         while agv_tag!=[13]:
             time.sleep(1)
-            agv_tag = self.read_tag()    
+            agv_tag = self.rwm.read_tag()    
             print('agv_tag',agv_tag)
             if agv_tag==[13]:
                 print('arrive Laser!')
-                self.write_AGVstop()        
+                self.rwm.write_AGVstop()   
+                self.fdb.put(self.url+"/AGV/",'Laser',1)#車子到站
+                self.fdb.put(self.url+"/ARM/",'Enable',1) #手臂可動作
                 
-    def ArmLaser(self):
-        #            #有門
-        self.fdb.put(self.url+"/AGV/",'Laser',1)#車子到站
-        self.fdb.put(self.url+"/Laser/",'Arm',0)#手臂下去(準備夾工件)
+    #arm_signal 0b1000
+    def Laser_Arm_Pinch_AM_I(self): #Laser底下遇到000010111手臂(夾放,AGV->機台,影處)
         self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/Laser/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/Laser/",'Chuck_R',0)#手臂夾
         self.RtArm.grip()
-        self.fdb.put(self.url+"/Laser/",'Arm',0)#手臂動(送進機臺)
         self.RtArm.move_to_machine3()
-        self.fdb.put(self.url+"/Laser/",'Arm',1)#手臂停止(到夾置具上方)
-        time.sleep(2)
-        Laser = self.fdb.get('/Laser',None)
-        while Laser['Chuck_W']!=0: #工具機夾爪夾持
-            time.sleep(0.5)
-            Laser = self.fdb.get('/Laser',None)
-            print("wait for CHUCK WORKPIECE")
-        self.fdb.put(self.url+"/Laser/",'Chuck_R',1)#手臂放(順序改一下)
         self.RtArm.ungrip()
-        self.fdb.put(self.url+"/Laser/",'Arm',0)#手臂移開
+        
+    #arm_signal 0b1001
+    def Laser_Arm_Move_MA(self): #Laser底下遇到00110011手臂(移動,機台->AGV)
         self.RtArm.back_from_machine3()
-        self.fdb.put(self.url+"/Laser/",'Arm',2)#手臂停(移回AGV)
-        time.sleep(2)
-        Laser = self.fdb.get('/Laser',None)
-        while Laser['Door']!=1:#門關後Delay20秒
-            time.sleep(0.5)
-            Laser = self.fdb.get('/Laser',None)
-            print("wait for DOOR OPENED")
-        time.sleep(2)
-        self.fdb.put(self.url+"/Laser/",'Arm',0)#手臂動(送進機臺)
+        
+    #arm_signal 0b1010
+    def Laser_Arm_Move_AM_I(self): #Laser底下遇到01110011手臂(移動,AGV->機台,影處)
         self.RtArm.move_to_machine3()
-        self.fdb.put(self.url+"/Laser/",'Arm',1)#手臂停止(到夾置具上方)
-        self.fdb.put(self.url+"/Laser/",'Chuck_R',0)#手臂夾
+        
+    #arm_signal 0b1011
+    def Laser_Arm_Pinch_MA(self): #Laser底下遇到01000011手臂(夾放,機台->AGV)
         self.RtArm.grip()
-        time.sleep(2)
-        Laser = self.fdb.get('/Laser',None)
-        while Laser['Chuck_W']!=1:#工具放
-            time.sleep(0.5)
-            Laser = self.fdb.get('/Laser',None)
-            print("wait for CHUCK WORKPIECE")
-        self.fdb.put(self.url+"/Laser/",'Arm',0)#手臂動(移回AGV)
         self.RtArm.back_from_machine3()
-        self.fdb.put(self.url+"/Laser/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/Laser/",'Arm',0)#手臂下去
         self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/Laser/",'Arm',2)
-        self.fdb.put(self.url+"/Laser/",'Chuck_R',1)#手臂放下工件
         self.RtArm.ungrip()
-        self.fdb.put(self.url+"/Laser/",'Arm',0)#手臂上去
-        self.fdb.put(self.url+"/Laser/",'Arm',2)#手臂回到原位
-        self.RtArm.back_from_workpiece_table()
-        self.fdb.put(self.url+"/AGV/",'Laser',0)#AGV 走
+        self.RtArm.back_from_workpiece_table()  
 
+
+    #agv_signal 0b11
     def toCMM(self):
-        self.write_station(12)
-        self.write_AGVrun()
-        agv_tag = self.read_tag()
+        array = {'WEDM':0,'HSM':0,'Laser':0,'CMM':0}#離開站點
+        self.fdb.patch(self.url+"/AGV/",array)
+        self.rwm.write_station(12)
+        self.rwm.write_AGVrun()
+        agv_tag = self.rwm.read_tag()
         print(agv_tag)
         while agv_tag!=[12]:
             time.sleep(1)
-            agv_tag = self.read_tag()    
+            agv_tag = self.rwm.read_tag()    
             print('agv_tag',agv_tag)
             if agv_tag==[12]:
                 print('arrive CMM!')
-                self.write_AGVstop()
+                self.rwm.write_AGVstop()
+                self.fdb.put(self.url+"/AGV/",'CMM',1) #agv到站
+                self.fdb.put(self.url+"/ARM/",'Enable',1) #手臂可動作
+                
+    #arm_signal 0b1100
+    def CMM_Arm_Pinch_AM_I(self): #CMM底下遇到000010111手臂(夾放,AGV->機台,影處)
+        self.RtArm.move_to_workpiece_table()
+        self.RtArm.grip()
+        self.RtArm.move_to_machine2()
+        self.RtArm.ungrip()
         
+    #arm_signal 0b1101
+    def CMM_Arm_Move_MA(self): #CMM底下遇到00110011手臂(移動,機台->AGV)
+        self.RtArm.back_from_machine2()
+        
+    #arm_signal 0b1110
+    def CMM_Arm_Move_AM_I(self): #CMM底下遇到01110011手臂(移動,AGV->機台,影處)
+        self.RtArm.move_to_machine2()
+        
+    #arm_signal 0b1111
+    def CMM_Arm_Pinch_MA(self): #CMM底下遇到01000011手臂(夾放,機台->AGV)
+        self.RtArm.grip()
+        self.RtArm.back_from_machine2()
+        self.RtArm.move_to_workpiece_table()
+        self.RtArm.ungrip()
+        self.RtArm.back_from_workpiece_table()  
+    """        
     def ArmCMM(self):
-        #            #沒門
-        self.fdb.put(self.url+"/AGV/",'CMM',1) #agv到站
+        #            #沒門        
         self.fdb.put(self.url+"/CMM/",'Arm',0) #手臂下去，準備夾工件
-        self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/CMM/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/CMM/",'Chuck_R',0)#手臂夾
-        self.RtArm.grip()
-        self.fdb.put(self.url+"/CMM/",'Arm',0)#手臂動(送進機臺)
-        self.RtArm.move_to_machine4()
-        self.fdb.put(self.url+"/CMM/",'Arm',1)#手臂停止(到夾置具上方)
-        time.sleep(2)
-        CMM = self.fdb.get('/CMM',None)
-        while CMM['Chuck_W']!=0:#工具機夾爪夾持
-            time.sleep(0.5)
-            CMM = self.fdb.get('/CMM',None)
-            print("wait for Chuck_workpiece")
-        self.fdb.put(self.url+"/CMM/",'Chuck_R',1)#手臂放
-        self.RtArm.ungrip()
-        self.fdb.put(self.url+"/CMM/",'Arm',0)#手臂移開
-        self.RtArm.back_from_machine4()
-        self.fdb.put(self.url+"/CMM/",'Arm',2)#手臂停(移回AGV)
-        time.sleep(2)
-        CMM = self.fdb.get('/CMM',None)
-        while CMM['Running']==1:#工具機夾爪夾持
-            time.sleep(0.5)
-            CMM = self.fdb.get('/CMM',None)
-            print("wait for Running")
-        time.sleep(2)
-        self.fdb.put(self.url+"/CMM/",'Arm',0)#手臂動(送進機臺)
-        self.RtArm.move_to_machine4()
-        self.fdb.put(self.url+"/CMM/",'Arm',1)#手臂停止(到夾置具上方)
-        self.fdb.put(self.url+"/CMM/",'Chuck_R',0)#手臂夾爪夾持
-        self.RtArm.grip()
-        time.sleep(2)
-        CMM = self.fdb.get('/CMM',None)
-        while CMM['Chuck_W']!=1:#工具夾爪放
-            time.sleep(0.5)
-            CMM = self.fdb.get('/CMM',None)
-            print("wait for Chuck_workpiece")
-        self.fdb.put(self.url+"/CMM/",'Arm',0)#手臂動(移回AGV)
-        self.RtArm.back_from_machine4()
-        self.fdb.put(self.url+"/CMM/",'Arm',2)#手臂停
-        self.fdb.put(self.url+"/CMM/",'Arm',0)#手臂下去
-        self.RtArm.move_to_workpiece_table()
-        self.fdb.put(self.url+"/CMM/",'Arm',2)#手臂放下工件
-        self.RtArm.ungrip()
-        self.fdb.put(self.url+"/CMM/",'Arm',0)#手臂上去
-        self.fdb.put(self.url+"/CMM/",'Arm',2)#手臂回到原位
-        self.RtArm.back_from_workpiece_table()
-        self.fdb.put(self.url+"/AGV/",'CMM',0)#AGV 走
+    """ 
+    '''    
+    def AutoRound(self):
+        while(1):
+            AGV = self.fdb.get('/AGV',None)
+            ARM = self.fdb.get('/ARM',None)
+            MES = self.fdb.get('/MES',None)
+            if AGV['WEDM']==1 and list(ARM.values())==[1,0]:#AGV在WEDM並且手臂符合動作
+                WEDM = self.fdb.get('/WEDM',None)               
+                if list(WEDM.values())==[0,0,0,0,0]:
+                    self.fdb.put(self.url+"/ARM/",'Moving',1)
+                    self.WEDM_Arm_Pinch_AM_I() #手臂(夾放,AGV->機台,影處)
+                    self.fdb.put(self.url+"/ARM/",'Moving',0)
+                    self.fdb.put(self.url+"/WEDM/",'ChuckEnable',1)
+                elif list(WEDM.values())==[1,1,0,0,0]:
+                    self.fdb.put(self.url+"/ARM/",'Moving',1)
+                    self.WEDM_Arm_Move_MA() #手臂(移動,機台->AGV)
+                    self.fdb.put(self.url+"/ARM/",'Moving',0)
+                    self.fdb.put(self.url+"/ARM/",'Enable',0)
+                elif list(WEDM.values())==[1,1,1,0,0]:
+                    self.fdb.put(self.url+"/ARM/",'Moving',1)
+                    self.WEDM_Arm_Move_AM_I() #手臂(移動,AGV->機台,影處)
+                    self.fdb.put(self.url+"/ARM/",'Moving',0)
+                    self.fdb.put(self.url+"/WEDM/",'ChuckEnable',0)
+                elif list(WEDM.values())==[0,0,1,0,0]:
+                    self.fdb.put(self.url+"/WEDM/",'Done',0)
+                    self.fdb.put(self.url+"/ARM/",'Moving',1)
+                    self.WEDM_Arm_Pinch_MA() #手臂(夾放,機台->AGV)
+                    self.fdb.put(self.url+"/ARM/",'Moving',0)
+                    self.fdb.put(self.url+"/ARM/",'Enable',0)
+            if AGV['HSM']==1 and list(ARM.values())==[1,0]:#AGV在WEDM並且手臂符合動作
+                HSM = self.fdb.get('/HSM',None)               
+                if list(HSM.values())==[0,0,0,0,0]:
+                    self.HSM_Arm_Pinch_AM_I() #手臂(夾放,AGV->機台,影處)
+                elif list(HSM.values())==[1,1,0,0,0]:
+                    self.HSM_Arm_Move_MA() #手臂(移動,機台->AGV)
+                elif list(HSM.values())==[1,1,1,0,0]:
+                    self.HSM_Arm_Move_AM_I() #手臂(移動,AGV->機台,影處)
+                elif list(HSM.values())==[1,1,1,0,0]:
+                    self.HSM_Arm_Pinch_MA() #手臂(夾放,機台->AGV)
+            if AGV['Laser']==1 and list(ARM.values())==[1,0]:#AGV在WEDM並且手臂符合動作
+                Laser = self.fdb.get('/Laser',None)               
+                if list(Laser.values())==[0,0,0,0,0]:
+                    self.Laser_Arm_Pinch_AM_I() #手臂(夾放,AGV->機台,影處)
+                elif list(Laser.values())==[1,1,0,0,0]:
+                    self.Laser_Arm_Move_MA() #手臂(移動,機台->AGV)
+                elif list(Laser.values())==[1,1,1,0,0]:
+                    self.Laser_Arm_Move_AM_I() #手臂(移動,AGV->機台,影處)
+                elif list(Laser.values())==[1,1,1,0,0]:
+                    self.Laser_Arm_Pinch_MA() #手臂(夾放,機台->AGV)
+            if AGV['CMM']==1 and list(ARM.values())==[1,0]:#AGV在WEDM並且手臂符合動作
+                CMM = self.fdb.get('/CMM',None)               
+                if list(CMM.values())==[0,0,0,0,0]:
+                    self.CMM_Arm_Pinch_AM_I() #手臂(夾放,AGV->機台,影處)
+                elif list(CMM.values())==[1,1,0,0,0]:
+                    self.CMM_Arm_Move_MA() #手臂(移動,機台->AGV)
+                elif list(CMM.values())==[1,1,1,0,0]:
+                    self.CMM_Arm_Move_AM_I() #手臂(移動,AGV->機台,影處)
+                elif list(CMM.values())==[1,1,1,0,0]:
+                    self.CMM_Arm_Pinch_MA() #手臂(夾放,機台->AGV)
+            if list(AGV.values())!=[0,0,0,0] and list(ARM.values())==[0,0] and MES!=0:#AGV在WEDM並且手臂符合動作
+                if MES==1:
+                    self.toWEDM()
+                elif MES==2:
+                    self.toHSM()
+                elif MES==3:
+                    self.toLaser()
+                elif MES==4:
+                    self.toCMM()
+       '''             
+                
+                
+        
+    
+        
         
         
         

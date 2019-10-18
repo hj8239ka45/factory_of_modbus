@@ -47,88 +47,89 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
             setCOM函式用於抓取選取COM的資料
         '''
         try:
-            self.exitButton.setShortcut('Ctrl+Q')
-            self.exitButton.setStatusTip('Exit application')
-            self.exitButton.triggered.connect(self.close)
+            mainMenu = self.menuBar()
+            fileMenu = mainMenu.addMenu('File')
+            exitButton = QAction(QIcon('exit24.png'), 'Exit', self)
+            exitButton.setShortcut('Ctrl+Q')
+            exitButton.setStatusTip('Exit application')
+            exitButton.triggered.connect(self.close)
+            fileMenu.addAction(exitButton)
             
-            self.enterButton.setShortcut('Ctrl+E')
-            self.enterButton.setStatusTip('Enter application')
-            self.enterButton.triggered.connect(self.turn_interface)
-
-# =============================================================================
-#         except:
-#             pass
-# =============================================================================
-
-            self.action0 = self.comMenu.addAction(str(com.serial_ports()[0]))
+            enterButton = QAction('Enter', self)
+            enterButton.setShortcut('Ctrl+E')
+            enterButton.setStatusTip('Enter application')
+            enterButton.triggered.connect(self.turn_interface)
+            fileMenu.addAction(enterButton)
+        
+            editMenu = mainMenu.addMenu('Edit')
+            COMMenu = editMenu.addMenu('COM')
+            self.action0 = COMMenu.addAction(str(com.serial_ports()[0]))
             self.action0.setStatusTip('COM application')
             self.action0.triggered.connect(self.setCom0)
-            self.comMenu.addAction(self.action0)
-
-            self.action1 = self. comMenu.addAction(str(com.serial_ports()[1]))
+            COMMenu.addAction(self.action0)
+            
+            self.action1 = COMMenu.addAction(str(com.serial_ports()[1]))
             self.action1.setStatusTip('COM application')
             self.action1.triggered.connect(self.setCom1)
-            self.comMenu.addAction(self.action1)
+            COMMenu.addAction(self.action1)
             
-            self.action2 = self.comMenu.addAction(str(com.serial_ports()[2]))
+            self.action2 = COMMenu.addAction(str(com.serial_ports()[2]))
             self.action2.setStatusTip('COM application')
             self.action2.triggered.connect(self.setCom2)
-            self.comMenu.addAction(self.action2)
+            COMMenu.addAction(self.action2)
             
-            self.action3 = self.comMenu.addAction(str(com.serial_ports()[3]))
+            self.action3 = COMMenu.addAction(str(com.serial_ports()[3]))
             self.action3.setStatusTip('COM application')
             self.action3.triggered.connect(self.setCom3)
-            self.comMenu.addAction(self.action3)
+            COMMenu.addAction(self.action3)
             
-            self.action4 = self.comMenu.addAction(str(com.serial_ports()[4]))
+            self.action4 = COMMenu.addAction(str(com.serial_ports()[4]))
             self.action4.setStatusTip('COM application')
             self.action4.triggered.connect(self.setCom4)
-            self.comMenu.addAction(self.action4)
+            COMMenu.addAction(self.action4)
             
-            self.action5 = self.comMenu.addAction(str(com.serial_ports()[5]))
+            self.action5 = COMMenu.addAction(str(com.serial_ports()[5]))
             self.action5.setStatusTip('COM application')
             self.action5.triggered.connect(self.setCom5)
-            self.comMenu.addAction(self.action5)
+            COMMenu.addAction(self.action5)
             
-            self.action6 = self.comMenu.addAction(str(com.serial_ports()[6]))
+            self.action6 = COMMenu.addAction(str(com.serial_ports()[6]))
             self.action6.setStatusTip('COM application')
             self.action6.triggered.connect(self.setCom6)
-            self.comMenu.addAction(self.action6)
+            COMMenu.addAction(self.action6)
             
-            self.action7 = self.comMenu.addAction(str(com.serial_ports()[7]))
+            self.action7 = COMMenu.addAction(str(com.serial_ports()[7]))
             self.action7.setStatusTip('COM application')
             self.action7.triggered.connect(self.setCom7)
-            self.comMenu.addAction(self.action7)
+            COMMenu.addAction(self.action7)
             
-            self.action8 = self.comMenu.addAction(str(com.serial_ports()[8]))
+            self.action8 = COMMenu.addAction(str(com.serial_ports()[8]))
             self.action8.setStatusTip('COM application')
             self.action8.triggered.connect(self.setCom8)
-            self.comMenu.addAction(self.action8)
+            COMMenu.addAction(self.action8)
             
-            self.action9 = self.comMenu.addAction(str(com.serial_ports()[9]))
+            self.action9 = COMMenu.addAction(str(com.serial_ports()[9]))
             self.action9.setStatusTip('COM application')
             self.action9.triggered.connect(self.setCom9)
-            self.comMenu.addAction(self.action9)
+            COMMenu.addAction(self.action9)
         except:
             pass
 # =============================================================================
-#         self.names = locals()
 #         for i in range(len(com.serial_ports())):
-#             print(i)
-#             self.names['self.action%s' %i] = QAction(str(com.serial_ports()[i]),self)
-#             #names['self.action%s' %i].setStatusTip(names['COM%s application' %i])
-#             self.names['self.action%s' %i].triggered.connect(self.setCom)
-#             COMMenu.addAction(self.names['self.action%s' %i])
+#             self.action = QAction(str(com.serial_ports()[i]),self)
+#             self.action.setStatusTip('COM application')
+#             self.action.triggered.connect(self.setCom)
+#             COMMenu.addAction(self.action)
 # =============================================================================
     
         self.button_enter.clicked.connect(self.turn_interface)
         print('b_window')
-        
 # =============================================================================
 #     def setCom(self):
-#         self.COM = self.names['self.action%s' %i].text()
+#         self.COM = self.action.text()
 #         print(self.COM)
 # =============================================================================
+        
     def setCom0(self):
         self.COM = self.action0.text()
         print(self.COM)
@@ -201,6 +202,7 @@ class MainUi(QtWidgets.QMainWindow, Ui_MainWindow):  # Python的多重繼承 Mai
         elif c1.open():
             self.label_error.setText("")
             print(Com)
+            #Com = 'COM4'
             self.b_window = SecondUi(c1,Com) #建立第二介面物件
             self.b_window.show()
         print(self.Str)
